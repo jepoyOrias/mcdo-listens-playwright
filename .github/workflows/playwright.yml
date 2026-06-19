@@ -1,0 +1,105 @@
+name: Playwright Tests
+
+on:
+  # Run manually from the GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      test_grep:
+        description: 'Test grep pattern (leave empty to run all)'
+        required: false
+        default: ''
+      survey_code:
+        description: 'MCDO_SURVEY_CODE (for single-shot test only)'
+        required: false
+        default: ''
+      order_no:
+        description: 'MCDO_ORDER_NO (for single-shot test only)'
+        required: false
+        default: '00001'
+  # Also run on push to main
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-desktop:
+    name: Desktop Tests (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests (desktop/chromium)
+        env:
+          MCDO_SURVEY_CODE: ${{ github.event.inputs.survey_code }}
+          MCDO_ORDER_NO: ${{ github.event.inputs.order_no }}
+        run: |
+          if [ -n "${{ github.event.inputs.test_grep }}" ]; then
+            npx playwright test --project=chromium --grep "${{ github.event.inputs.test_grep }}"
+          elif [ -n "${{ github.event.inputs.survey_code }}" ]; then
+            npx playwright test --project=chromium --grep "known valid code"
+          else
+            npx playwright test --project=chromium
+          fi
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-desktop
+          path: playwright-report/
+          retention-days: 7
+
+  test-mobile:
+    name: Mobile Tests (Pixel 5 Chrome)
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright tests (mobile-chrome)
+        env:
+          MCDO_SURVEY_CODE: ${{ github.event.inputs.survey_code }}
+          MCDO_ORDER_NO: ${{ github.event.inputs.order_no }}
+        run: |
+          if [ -n "${{ github.event.inputs.test_grep }}" ]; then
+            npx playwright test --project=mobile-chrome --grep "${{ github.event.inputs.test_grep }}"
+          elif [ -n "${{ github.event.inputs.survey_code }}" ]; then
+            npx playwright test --project=mobile-chrome --grep "known valid code"
+          else
+            npx playwright test --project=mobile-chrome
+          fi
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report-mobile
+          path: playwright-report/
+          retention-days: 7
+
