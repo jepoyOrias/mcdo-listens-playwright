@@ -1,0 +1,16 @@
+{
+  "name": "mcdo-listens-playwright",
+  "version": "1.0.0",
+  "description": "Playwright test suite for McDo Listens survey - mobile and desktop",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:desktop": "npx playwright test --project=chromium --project=firefox --project=webkit",
+    "test:mobile": "npx playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:all": "npx playwright test",
+    "report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript": "^5.4.5"
+  }
+}
